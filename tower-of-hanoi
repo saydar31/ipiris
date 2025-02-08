@@ -1,0 +1,99 @@
+#!/bin/bash
+
+# Инициализация стеков
+A=(8 7 6 5 4 3 2 1)
+B=()
+C=()
+
+# Номер хода
+move_number=1
+
+# Функция для отображения стеков
+display_stacks() {
+    echo -e "Ход: $move_number"
+    max_height=${#A[@]}
+    if [ ${#B[@]} -gt $max_height ]; then
+        max_height=${#B[@]}
+    fi
+    if [ ${#C[@]} -gt $max_height ]; then
+        max_height=${#C[@]}
+    fi
+
+    for ((i=max_height-1; i>=0; i--)); do
+        echo -n "A: "
+        if [ $i -lt ${#A[@]} ]; then
+            echo -n "${A[i]} "
+        else
+            echo -n "   "  # Пустое место для выравнивания
+        fi
+        echo -ne "\tB: "
+        if [ $i -lt ${#B[@]} ]; then
+            echo -n "${B[i]} "
+        else
+            echo -n "   "  # Пустое место для выравнивания
+        fi
+        echo -ne "\tC: "
+        if [ $i -lt ${#C[@]} ]; then
+            echo -n "${C[i]} "
+        else
+            echo -n "   "  # Пустое место для выравнивания
+        fi
+        echo
+    done
+    echo
+}
+
+# Функция для проверки победы
+check_victory() {
+    if [ "${B[*]}" == "8 7 6 5 4 3 2 1" ] || [ "${C[*]}" == "8 7 6 5 4 3 2 1" ]; then
+        echo "Поздравляем! Вы победили!"
+        exit 0
+    fi
+}
+
+# Основной игровой цикл
+while true; do
+    display_stacks
+
+    read -p "Введите стек-отправитель и стек-получатель (или 'q' для выхода): " input
+    input=$(echo "$input" | tr '[:lower:]' '[:upper:]') # Приводим к верхнему регистру
+
+    if [[ "$input" == "Q" ]]; then
+        echo "Выход из игры."
+        exit 1
+    fi
+
+    # Разделяем ввод на два стека
+    read -r from_stack to_stack <<< "$input"
+
+    # Проверка на корректность ввода
+    if [[ -z "$from_stack" || -z "$to_stack" ]]; then
+        echo "Ошибка: введите два имени стеков."
+        continue
+    fi
+
+    # Получаем верхние элементы стеков
+    eval "from_top=\${$from_stack[0]}"
+    eval "to_top=\${$to_stack[0]}"
+
+    # Проверка на возможность перемещения
+    if [[ -z "$from_top" ]]; then
+        echo "Ошибка: стек-отправитель пуст."
+        continue
+    fi
+
+    if [[ -n "$to_top" && "$from_top" -gt "$to_top" ]]; then
+        echo "Ошибка: нельзя положить большее число на меньшее."
+        continue
+    fi
+
+    # Выполнение перемещения
+    eval "$to_stack+=(\$from_top)"
+    eval "${from_stack}=(\"\${$from_stack[@]:1}\")"
+
+    # Увеличиваем номер хода
+    ((move_number++))
+
+    # Проверка на победу
+    check_victory
+done
